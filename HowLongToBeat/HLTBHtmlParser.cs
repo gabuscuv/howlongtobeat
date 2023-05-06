@@ -58,7 +58,8 @@ namespace HowLongToBeat
 
         private static string[] GetGameTitles(AngleSharp.Dom.IDocument document)
         {
-            var gameTitlesNodes = document.All.Where(x => x.LocalName == "a" && x.ClassList.Contains("text_white"));
+            var gameTitlesNodes = document.All.Where(x => x.LocalName == "a" 
+                && (x.ClassList.Contains("text_white") || x.ClassList.Contains("text_green")) );
             var gameTitles = new string[gameTitlesNodes.Count()];
 
             var i = -1;

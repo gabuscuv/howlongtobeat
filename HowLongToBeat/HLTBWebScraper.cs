@@ -30,6 +30,9 @@ namespace HowLongToBeat
 
         private async Task<string> GetGameHTMLResultsAsync(string query)
         {
+            // HOTFIX: Make sure is cleaned for reusing httpclient requests
+            // TODO: Possible Fix: Set the Headers only once, maybe with the constructor.
+            client.DefaultRequestHeaders.Clear();
             client.DefaultRequestHeaders.TryAddWithoutValidation("Content-Type", "application/x-www-form-urlencoded");
             var userAgent = RandomUa.RandomUserAgent;
             client.DefaultRequestHeaders.UserAgent.ParseAdd(userAgent);

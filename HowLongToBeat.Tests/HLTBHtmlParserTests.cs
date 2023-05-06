@@ -74,7 +74,7 @@ namespace HowLongToBeat.Tests
 			var result = await ws.GetGameDetailsAsync(html);
 
 			// assert
-			var pf = new Game(title: "Pathfinder: Kingmaker", imgURL: "https://howlongtobeat.com/games/60050_Pathfinder_Kingmaker.jpg", main: "74½ Hours", mainandextras: "126 Hours", completionist: "188 Hours");
+			var pf = new Game(title: "Pathfinder: Kingmaker", imgURL: "https://howlongtobeat.com/games/60050_Pathfinder_Kingmaker.jpg", main: "74Â½ Hours", mainandextras: "126 Hours", completionist: "188 Hours");
 			var actual1 = result.First();
 			Assert.That(actual1.Title, Is.EqualTo(pf.Title));
 			Assert.That(actual1.ImgURL, Is.EqualTo(pf.ImgURL));
@@ -82,7 +82,7 @@ namespace HowLongToBeat.Tests
 			Assert.That(actual1.MainAndExtras, Is.EqualTo(pf.MainAndExtras));
 			Assert.That(actual1.Completionist, Is.EqualTo(pf.Completionist));
 
-			var wor = new Game(title: "Pathfinder: Wrath of the Righteous", imgURL: "https://howlongtobeat.com/games/83856_Pathfinder_Wrath_of_the_Righteous.jpg", main: "57½ Hours", mainandextras: "125 Hours", completionist: "200 Hours");
+			var wor = new Game(title: "Pathfinder: Wrath of the Righteous", imgURL: "https://howlongtobeat.com/games/83856_Pathfinder_Wrath_of_the_Righteous.jpg", main: "57Â½ Hours", mainandextras: "125 Hours", completionist: "200 Hours");
 			var actual2 = result.Last();
 			Assert.That(actual2.Title, Is.EqualTo(wor.Title));
 			Assert.That(actual2.ImgURL, Is.EqualTo(wor.ImgURL));
