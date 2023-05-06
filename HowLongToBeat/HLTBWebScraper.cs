@@ -1,4 +1,5 @@
 ﻿using RandomUserAgent;
+using HowLongToBeat.Enums;
 using System.Collections.Generic;
 using System.Net.Http;
 using System.Threading.Tasks;
@@ -13,31 +14,38 @@ namespace HowLongToBeat
     public class HLTBWebScraper : IHLTBWebScraper
     {
         private readonly HttpClient client;
+        private readonly HLTBRestWrapper restWrapper;
+        private readonly EMethodBehaviour behaviour;
 
-        public HLTBWebScraper(HttpClient client)
+        public HLTBWebScraper(HttpClient client, EMethodBehaviour behaviour = EMethodBehaviour.RestCalls)
         {
+            this.behaviour = behaviour;
             this.client = client;
+            client.DefaultRequestHeaders.Add("Origin", "https://howlongtobeat.com");
+            client.DefaultRequestHeaders.Add("Referer", "https://howlongtobeat.com");
+            restWrapper = new HLTBRestWrapper(client);
+            client.DefaultRequestHeaders.TryAddWithoutValidation("Content-Type", "application/x-www-form-urlencoded");
+            client.DefaultRequestHeaders.UserAgent.ParseAdd(RandomUa.RandomUserAgent);
+
         }
 
         public async Task<List<Game>> Search(string query)
         {
-            string html = await GetGameHTMLResultsAsync(query);
-            var parser = new HLTBHtmlParser();
-            var result = await parser.GetGameDetailsAsync(html);
 
-            return result;
+            if ( behaviour == EMethodBehaviour.WebScrapper)
+            {
+                string html = await GetGameHTMLResultsAsync(query);
+                var parser = new HLTBHtmlParser();
+                var result = await parser.GetGameDetailsAsync(html);
+                return result;
+            }
+
+            return await restWrapper.Search(query);
+            
         }
 
         private async Task<string> GetGameHTMLResultsAsync(string query)
         {
-            // HOTFIX: Make sure is cleaned for reusing httpclient requests
-            // TODO: Possible Fix: Set the Headers only once, maybe with the constructor.
-            client.DefaultRequestHeaders.Clear();
-            client.DefaultRequestHeaders.TryAddWithoutValidation("Content-Type", "application/x-www-form-urlencoded");
-            var userAgent = RandomUa.RandomUserAgent;
-            client.DefaultRequestHeaders.UserAgent.ParseAdd(userAgent);
-            client.DefaultRequestHeaders.Add("Origin", "https://howlongtobeat.com");
-            client.DefaultRequestHeaders.Add("Referer", "https://howlongtobeat.com");
 
             var values = new Dictionary<string, string>
             {

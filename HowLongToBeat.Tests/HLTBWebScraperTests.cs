@@ -9,65 +9,95 @@ using System.Threading.Tasks;
 
 namespace HowLongToBeat.Tests
 {
-	public class HLTBWebScraperTests
-	{
+    public class HLTBWebScraperTests
+    {
 
-		[Test]
-		public async Task RealWorldTest()
-		{
-			
-			var client = new HowLongToBeat.HLTBWebScraper(new System.Net.Http.HttpClient());
-			var result = await client.Search("Gravity Rush");
+        [Test]
+        public async Task FindGameNames()
+        {
 
-			ICollection<string> titles = result.Select(element=>element.Title).ToList();
-			CollectionAssert.Contains(titles,"Gravity Rush");
-			CollectionAssert.Contains(titles,"Gravity Rush: Remastered");
-			
-		}
+            var client = new HowLongToBeat.HLTBWebScraper(new System.Net.Http.HttpClient());
+            var result = await client.Search("Gravity Rush");
 
-		[Test]
-		public async Task ReusingSameHttpClient()
-		{
-			IList<Game> result;
-			var client = new HowLongToBeat.HLTBWebScraper(new System.Net.Http.HttpClient());
-			result = await client.Search("Gravity Rush");
-			try
-			{
-				result = await client.Search("Atelier Rorona Plus: The Alchemist of Arland");
-			}
-			//    System.FormatException : Cannot add value because header 'Referer' does not support multiple values.
-			catch(System.FormatException)
-			{
-				Assert.Fail();
-			}
-			Assert.Pass();
-		}
+            ICollection<string> titles = result.Select(element => element.Title).ToList();
+            CollectionAssert.Contains(titles, "Gravity Rush");
+            CollectionAssert.Contains(titles, "Gravity Rush: Remastered");
+        }
 
-		[Test]
-		public async Task Test_Search()
-		{
-			// arrange
-			var query = "pathfinder";
-			var content = new StringContent(ExampleContent());
-			var fakeHandler = new FakeHttpMessageHandler(content);
-			var client = new HttpClient(fakeHandler);
-			var ws = new HLTBWebScraper(client);
+        [Test]
+        public async Task ImgURLValuesAreNotNull()
+        {
+            var client = new HowLongToBeat.HLTBWebScraper(new System.Net.Http.HttpClient());
+            var result = await client.Search("Blue Reflection");
 
-			// act
-			var actual = await ws.Search(query);
+            CollectionAssert.AllItemsAreNotNull(result.Select(g => g.ImgURL));
+			CollectionAssert.AllItemsAreUnique(result.Select(g => g.ImgURL));
+        }
 
-			// assert
-			var pathfinder = new Game(title: "Pathfinder: Kingmaker", imgURL: "https://howlongtobeat.com/games/60050_Pathfinder_Kingmaker.jpg", main: "74½ Hours", mainandextras: "126 Hours", completionist: "188 Hours");
-			var wor = new Game(title: "Pathfinder: Wrath of the Righteous", imgURL: "https://howlongtobeat.com/games/83856_Pathfinder_Wrath_of_the_Righteous.jpg", main: "57½ Hours", mainandextras: "125 Hours", completionist: "200 Hours");
-			var expected = new List<Game> { pathfinder, wor };
+        [Test]
+        public async Task MainDurationValuesAreNotNullAndValid()
+        {
+            var client = new HowLongToBeat.HLTBWebScraper(new System.Net.Http.HttpClient());
+            var result = await client.Search("Odin Sphere");
 
-			Assert.That(JsonSerializer.Serialize(actual), Is.EqualTo(JsonSerializer.Serialize(expected)));
-		}
 
-		public static string ExampleContent()
-		{
-			var html =
-				@"
+            CollectionAssert.AllItemsAreNotNull(result.Select(g => g.Main));
+			Assert.Greater(System.Decimal.Parse(result[0].Main),0);
+        }
+
+        [Test]
+        public async Task MainAndExtrasDurationValuesAreNotNullAndValid()
+        {
+            var client = new HowLongToBeat.HLTBWebScraper(new System.Net.Http.HttpClient());
+            var result = await client.Search("No More Heroes");
+
+            CollectionAssert.AllItemsAreNotNull(result.Select(g => g.MainAndExtras));
+			Assert.Greater(System.Decimal.Parse(result[0].MainAndExtras),0);
+        }
+
+        [Test]
+        public async Task ReusingSameHttpClient()
+        {
+            IList<Game> result;
+            var client = new HowLongToBeat.HLTBWebScraper(new System.Net.Http.HttpClient());
+            result = await client.Search("Gravity Rush");
+            try
+            {
+                result = await client.Search("Atelier Rorona Plus: The Alchemist of Arland");
+            }
+            //    System.FormatException : Cannot add value because header 'Referer' does not support multiple values.
+            catch (System.FormatException)
+            {
+                Assert.Fail();
+            }
+            Assert.Pass();
+        }
+
+        [Test]
+        public async Task Test_Search()
+        {
+            // arrange
+            var query = "pathfinder";
+            var content = new StringContent(ExampleContent());
+            var fakeHandler = new FakeHttpMessageHandler(content);
+            var client = new HttpClient(fakeHandler);
+            var ws = new HLTBWebScraper(client, Enums.EMethodBehaviour.WebScrapper);
+
+            // act
+            var actual = await ws.Search(query);
+
+            // assert
+            var pathfinder = new Game(title: "Pathfinder: Kingmaker", imgURL: "https://howlongtobeat.com/games/60050_Pathfinder_Kingmaker.jpg", main: "74½ Hours", mainandextras: "126 Hours", completionist: "188 Hours");
+            var wor = new Game(title: "Pathfinder: Wrath of the Righteous", imgURL: "https://howlongtobeat.com/games/83856_Pathfinder_Wrath_of_the_Righteous.jpg", main: "57½ Hours", mainandextras: "125 Hours", completionist: "200 Hours");
+            var expected = new List<Game> { pathfinder, wor };
+
+            Assert.That(JsonSerializer.Serialize(actual), Is.EqualTo(JsonSerializer.Serialize(expected)));
+        }
+
+        public static string ExampleContent()
+        {
+            var html =
+                @"
 <div class=""global_padding shadow_box back_blue center"">
 	<h3> We Found 8 Games for ""Pathfinder"" </h3>
 </div>
@@ -126,29 +156,29 @@ namespace HowLongToBeat.Tests
 </ul>
 ";
 
-			return html;
-		}
-	}
+            return html;
+        }
+    }
 
-	public class FakeHttpMessageHandler : HttpMessageHandler
-	{
-		private readonly HttpContent content;
+    public class FakeHttpMessageHandler : HttpMessageHandler
+    {
+        private readonly HttpContent content;
 
-		public FakeHttpMessageHandler(HttpContent content)
-		{
-			this.content = content;
-		}
+        public FakeHttpMessageHandler(HttpContent content)
+        {
+            this.content = content;
+        }
 
-		public HttpRequestMessage? RequestMessage { get; private set; }
+        public HttpRequestMessage? RequestMessage { get; private set; }
 
-		protected override Task<HttpResponseMessage> SendAsync(HttpRequestMessage request, CancellationToken cancellationToken)
-		{
-			RequestMessage = request;
-			var responseMessage = new HttpResponseMessage(HttpStatusCode.OK)
-			{
-				Content = content
-			};
-			return Task.FromResult(responseMessage);
-		}
-	}
+        protected override Task<HttpResponseMessage> SendAsync(HttpRequestMessage request, CancellationToken cancellationToken)
+        {
+            RequestMessage = request;
+            var responseMessage = new HttpResponseMessage(HttpStatusCode.OK)
+            {
+                Content = content
+            };
+            return Task.FromResult(responseMessage);
+        }
+    }
 }
