@@ -25,8 +25,15 @@ namespace HowLongToBeat
             client.DefaultRequestHeaders.Add("Referer", "https://howlongtobeat.com");
             restWrapper = new HLTBRestWrapper(client);
             client.DefaultRequestHeaders.TryAddWithoutValidation("Content-Type", "application/x-www-form-urlencoded");
+            do{
+            try{
             client.DefaultRequestHeaders.UserAgent.ParseAdd(RandomUa.RandomUserAgent);
-
+            break;
+            }catch(System.FormatException)
+            {
+                // Quick Hack
+            }
+            }while(true);
         }
 
         public async Task<List<Game>> Search(string query)
